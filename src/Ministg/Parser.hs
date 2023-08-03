@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Ministg.Parser
--- Copyright   : (c) 2009-2012 Bernie Pope 
+-- Copyright   : (c) 2009-2012 Bernie Pope
 -- License     : BSD-style
 -- Maintainer  : florbitous@gmail.com
 -- Stability   : experimental
@@ -29,14 +29,14 @@ tokenParser test
 
 symbol :: Lex.Symbol -> Parser ()
 symbol tok
-   = tokenParser $ 
+   = tokenParser $
         \next -> if next == tok then Just () else Nothing
 
-parser :: FilePath -> String -> Either ParseError Program 
+parser :: FilePath -> String -> Either ParseError Program
 parser source input
    = case Lex.lexer source input of
         Left err -> Left err
-        Right toks -> parse program source toks 
+        Right toks -> parse program source toks
 
 program :: Parser Program
 program = Program <$> sepEndBy decl semiColon <* eof
@@ -45,21 +45,21 @@ decl :: Parser Decl
 decl = Decl <$> var <*> (equals *> object)
 
 exp :: Parser Exp
-exp = funCallOrVar <|> 
-      expAtomLiteral <|> 
-      primApp <|> 
-      letExp <|> 
+exp = funCallOrVar <|>
+      expAtomLiteral <|>
+      primApp <|>
+      letExp <|>
       caseExp <|>
       stack
 
 stack :: Parser Exp
 stack = Stack <$> (symbol Lex.Stack *> quotedString) <*> exp
 
-quotedString :: Parser String 
+quotedString :: Parser String
 quotedString = tokenParser getString
    where
    getString (Lex.QuotedString s) = Just s
-   getString other = Nothing 
+   getString other = Nothing
 
 funCallOrVar :: Parser Exp
 funCallOrVar = do
@@ -68,28 +68,28 @@ funCallOrVar = do
    return $ if null args
       then Atom $ Variable v
       -- we don't know the arity of the function yet.
-      else FunApp Nothing v args 
+      else FunApp Nothing v args
 
 expAtomLiteral :: Parser Exp
-expAtomLiteral = Atom <$> atomLiteral 
+expAtomLiteral = Atom <$> atomLiteral
 
 expAtom :: Parser Exp
 expAtom = Atom <$> atom
 
 primApp :: Parser Exp
-primApp = PrimApp <$> primOp <*> many1 atom 
+primApp = PrimApp <$> primOp <*> many1 atom
 
 primOp, add, subtract, multiply, eq, lessThan, greaterThan, lessThanEquals, greaterThanEquals :: Parser Prim
 
-primOp = 
-   add <|> 
-   subtract <|> 
-   multiply <|> 
-   eq <|> 
-   lessThan <|> 
-   greaterThan <|> 
-   lessThanEquals <|> 
-   greaterThanEquals <|> 
+primOp =
+   add <|>
+   subtract <|>
+   multiply <|>
+   eq <|>
+   lessThan <|>
+   greaterThan <|>
+   lessThanEquals <|>
+   greaterThanEquals <|>
    intToBool
 
 add = const Add <$> symbol Lex.Plus
@@ -107,7 +107,7 @@ letExp = flattenLet <$> (symbol Lex.Let *> leftBrace *> sepEndBy1 decl semiColon
 
 flattenLet :: [Decl] -> Exp -> Exp
 flattenLet [Decl var obj] body = Let var obj body
-flattenLet (Decl var obj : decls) body = Let var obj $ flattenLet decls body 
+flattenLet (Decl var obj : decls) body = Let var obj $ flattenLet decls body
 
 caseExp :: Parser Exp
 caseExp = Case <$> (symbol Lex.Case *> exp) <*> (symbol Lex.Of *> leftBrace *> sepEndBy1 alt semiColon <* rightBrace)
@@ -118,7 +118,7 @@ atomLiteral = Literal <$> literal
 atomVariable = Variable <$> var
 
 literal :: Parser Literal
-literal = Integer <$> natural 
+literal = Integer <$> natural
 
 alt :: Parser Alt
 alt = patAlt <|> defaultAlt
@@ -139,23 +139,23 @@ con = Con <$> (symbol Lex.Con *> leftParen *> constructor) <*> (many atom <* rig
 thunk = Thunk <$> (symbol Lex.Thunk *> leftParen *> exp <* rightParen) <*> pure []
 errorObj = const Error <$> symbol Lex.Error
 
-var :: Parser Var 
+var :: Parser Var
 var = tokenParser getIdent
    where
    getIdent (Lex.Variable s) = Just s
-   getIdent other = Nothing 
+   getIdent other = Nothing
 
-constructor :: Parser Constructor 
+constructor :: Parser Constructor
 constructor = tokenParser getIdent
    where
    getIdent (Lex.Constructor s) = Just s
-   getIdent other = Nothing 
+   getIdent other = Nothing
 
 equals :: Parser ()
-equals = symbol Lex.Equals 
+equals = symbol Lex.Equals
 
 semiColon :: Parser ()
-semiColon = symbol Lex.SemiColon 
+semiColon = symbol Lex.SemiColon
 
 rightArrow :: Parser ()
 rightArrow = symbol Lex.RightArrow
@@ -168,10 +168,10 @@ leftBrace, rightBrace :: Parser ()
 leftBrace = symbol Lex.LeftBrace
 rightBrace = symbol Lex.RightBrace
 
-natural :: Parser Integer 
-natural = 
+natural :: Parser Integer
+natural =
    tokenParser getNat
    where
-   getNat :: Lex.Symbol -> Maybe Integer 
-   getNat (Lex.Natural n) = Just n 
-   getNat other = Nothing 
+   getNat :: Lex.Symbol -> Maybe Integer
+   getNat (Lex.Natural n) = Just n
+   getNat other = Nothing

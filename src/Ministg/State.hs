@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Ministg.State
--- Copyright   : (c) 2009-2012 Bernie Pope 
+-- Copyright   : (c) 2009-2012 Bernie Pope
 -- License     : BSD-style
 -- Maintainer  : florbitous@gmail.com
 -- Stability   : experimental
@@ -10,11 +10,11 @@
 -- Representation of the state of the ministg evaluator.
 -----------------------------------------------------------------------------
 
-module Ministg.State 
+module Ministg.State
    ( Continuation (..)
    , Stack
-   , prettyStack 
-   , Heap 
+   , prettyStack
+   , Heap
    , EvalState (..)
    , Eval
    , initStack
@@ -33,13 +33,13 @@ module Ministg.State
    )
    where
 
-import Control.Monad.State 
+import Control.Monad.State
 import Data.Map as Map hiding (map)
 import Data.Set as Set hiding (map)
 import Ministg.AST
 import Ministg.CallStack (CallStack, push, prettyCallStack)
-import Ministg.Pretty 
-import Ministg.Options 
+import Ministg.Pretty
+import Ministg.Options
    ( Flag (..), defaultMaxSteps, defaultTraceDir
    , probeFlagsFirst, existsFlag, getTraceDir, getMaxSteps )
 
@@ -58,20 +58,20 @@ instance FreeVars Continuation where
    freeVars (ApplyToArgs args) = freeVars args
 
 instance Pretty Continuation where
-   pretty (CaseCont alts callStack) 
+   pretty (CaseCont alts callStack)
       = text "case *" <+> braces (vcat (punctuate semi (map pretty alts))) $$
         nest 3 (prettyCallStack callStack)
-   pretty (UpdateCont var callStack) 
+   pretty (UpdateCont var callStack)
       = text "upd *" <+> text var $$
         nest 3 (prettyCallStack callStack)
-   pretty (ArgCont atom) = text "arg" <+> pretty atom 
+   pretty (ArgCont atom) = text "arg" <+> pretty atom
    pretty (ApplyToArgs atoms) = parens (char '*' <+> hsep (map pretty atoms))
 
 isArgCont :: Continuation -> Bool
 isArgCont (ArgCont {}) = True
 isArgCont _other = False
 
--- | The evaluation stack. 
+-- | The evaluation stack.
 type Stack = [Continuation]
 
 prettyStack :: Stack -> Doc
@@ -84,13 +84,13 @@ prettyStack stack = (vcat $ map prettyCont stack)
 type Heap = Map.Map Var Object
 
 -- | State to be threaded through evaluation.
-data EvalState 
-   = EvalState 
+data EvalState
+   = EvalState
      { state_unique :: !Int           -- ^ Unique counter for generating fresh variables.
      , state_callStack :: CallStack   -- ^ Function call stack (for debugging).
      , state_stepCount :: !Integer    -- ^ How many steps have been executed.
      , state_lastRule :: !String      -- ^ The most recent evaluation rule applied.
-     , state_trace :: Bool            -- ^ Do we want tracing of evaluation steps? 
+     , state_trace :: Bool            -- ^ Do we want tracing of evaluation steps?
      , state_maxTraceSteps :: Integer -- ^ Maximum number of evaluation steps to trace.
      , state_traceDir :: String       -- ^ Name of directory to store trace files.
      , state_gc :: Bool               -- ^ Do we want garbage collection?
@@ -101,16 +101,16 @@ data EvalState
 type Eval a = StateT EvalState IO a
 
 initState :: [Flag] -> EvalState
-initState flags = 
-   EvalState 
+initState flags =
+   EvalState
    { state_unique = 0
    , state_callStack = []
-   , state_stepCount = 0 
+   , state_stepCount = 0
    , state_lastRule = ""
-   , state_trace = existsFlag flags Trace 
+   , state_trace = existsFlag flags Trace
    , state_maxTraceSteps = getMaxSteps flags
    , state_traceDir = getTraceDir flags
-   , state_gc = not $ existsFlag flags NoGC 
+   , state_gc = not $ existsFlag flags NoGC
    , state_traceCallStack = existsFlag flags CallStack
    }
 
@@ -126,12 +126,12 @@ initStack = []
 setRule :: String -> Eval ()
 setRule str = do
    lr <- gets state_lastRule
-   modify $ \s -> s { state_lastRule = str } 
+   modify $ \s -> s { state_lastRule = str }
 
 incStepCount :: Eval ()
 incStepCount = do
    sc <- gets state_stepCount
-   modify $ \s -> s { state_stepCount = sc + 1 } 
+   modify $ \s -> s { state_stepCount = sc + 1 }
 
 pushCallStack :: String -> Eval ()
 pushCallStack str = do
@@ -144,8 +144,8 @@ setCallStack cs = modify $ \s -> s { state_callStack = cs }
 -- | Lookup a variable in a heap. If found return the corresponding
 -- object, otherwise throw an error (it is a fatal error which can't
 -- be recovered from).
-lookupHeap :: Var -> Heap -> Object 
-lookupHeap var heap = 
+lookupHeap :: Var -> Heap -> Object
+lookupHeap var heap =
    case Map.lookup var heap of
       Nothing -> error $ "undefined variable: " ++ show var
       Just object -> object
@@ -156,8 +156,8 @@ lookupHeapAtom (Variable var) heap = lookupHeap var heap
 lookupHeapAtom other _heap = error $ "lookupHeapAtom called with non variable " ++ show other
 
 -- | Add a new mapping to a heap, or update an existing one.
-updateHeap :: Var -> Object -> Heap -> Heap 
-updateHeap = Map.insert 
+updateHeap :: Var -> Object -> Heap -> Heap
+updateHeap = Map.insert
 
 -- | Generate a new unique variable. Uniqueness is guaranteed by using a
 -- "$" prefix, which is not allowed in the concrete sytax of ministg programs.
@@ -168,7 +168,7 @@ freshVar = do
    return $ "$" ++ show u
 
 -- XXX not very good for printing large objects, nonetheless it is lazy.
-prettyHeapObject :: Heap -> Object -> String 
+prettyHeapObject :: Heap -> Object -> String
 prettyHeapObject heap (Con constructor args)
    | length args == 0 = constructor
    | otherwise = "(" ++ unwords (constructor : map (prettyHeapAtom heap) args) ++ ")"
@@ -178,6 +178,6 @@ prettyHeapObject _heap (Thunk {}) = "<thunk>"
 prettyHeapObject _heap BlackHole = "<blackhole>"
 prettyHeapObject _heap Error = "<error>"
 
-prettyHeapAtom :: Heap -> Atom -> String 
+prettyHeapAtom :: Heap -> Atom -> String
 prettyHeapAtom heap (Literal (Integer i)) = show i
 prettyHeapAtom heap (Variable var) = prettyHeapObject heap $ lookupHeap var heap

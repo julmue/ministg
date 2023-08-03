@@ -141,34 +141,34 @@ rightArrow = text "->"
 -- (2) as things which are allocated on the heap during execution.
 
 data Object
-   = Fun [Var] Exp                 -- ^ Function values (FUN (x_1 ... x_n -> e).
-   | Pap Var [Atom]                -- ^ Partial applications (PAP (f a_1 ... a_n)).
-   | Con Constructor [Atom]        -- ^ Data constructor application (CON (C a_1 ... a_n)).
-   | Thunk Exp CallStack           -- ^ THUNK (e).
-   | BlackHole                     -- ^ BLACKHOLE (only during evaluation - not part of the language syntax).
-   | Error                         -- ^ Raise an exception.
-   deriving (Eq, Show)
+  = Fun [Var] Exp                 -- ^ Function values (FUN (x_1 ... x_n -> e).
+  | Pap Var [Atom]                -- ^ Partial applications (PAP (f a_1 ... a_n)).
+  | Con Constructor [Atom]        -- ^ Data constructor application (CON (C a_1 ... a_n)).
+  | Thunk Exp CallStack           -- ^ THUNK (e).
+  | BlackHole                     -- ^ BLACKHOLE (only during evaluation - not part of the language syntax).
+  | Error                         -- ^ Raise an exception.
+  deriving (Eq, Show)
 
 instance FreeVars Object where
-   freeVars (Fun vars exp) = freeVars exp \\ Set.fromList vars
-   freeVars (Pap var args) = Set.singleton var `Set.union` freeVars args
-   freeVars (Con constructor args) = freeVars args
-   freeVars (Thunk exp callStack) = freeVars exp
-   freeVars BlackHole = Set.empty
-   freeVars Error = Set.empty
+  freeVars (Fun vars exp) = freeVars exp \\ Set.fromList vars
+  freeVars (Pap var args) = Set.singleton var `Set.union` freeVars args
+  freeVars (Con constructor args) = freeVars args
+  freeVars (Thunk exp callStack) = freeVars exp
+  freeVars BlackHole = Set.empty
+  freeVars Error = Set.empty
 
 maybeNest :: Exp -> Doc -> Doc -> Doc
 maybeNest exp d1 d2 = if isNestedExp exp then d1 $$ nest 3 d2 else d1 <+> d2
 
 instance Pretty Object where
-   pretty (Fun vars exp)
-      = text "FUN" <> parens (maybeNest exp (hsep (map text vars) <+> rightArrow) (pretty exp))
-   pretty (Pap var atoms) = text "PAP" <> parens (text var <+> hsep (map pretty atoms))
-   pretty (Con constructor atoms) = text "CON" <> parens (text constructor <+> hsep (map pretty atoms))
-   pretty (Thunk exp callStack)
-      = text "THUNK" <> parens (pretty exp) $$ nest 3 (prettyCallStack callStack)
-   pretty BlackHole = text "BLACKHOLE"
-   pretty Error = text "ERROR"
+  pretty (Fun vars exp)
+    = text "FUN" <> parens (maybeNest exp (hsep (map text vars) <+> rightArrow) (pretty exp))
+  pretty (Pap var atoms) = text "PAP" <> parens (text var <+> hsep (map pretty atoms))
+  pretty (Con constructor atoms) = text "CON" <> parens (text constructor <+> hsep (map pretty atoms))
+  pretty (Thunk exp callStack)
+    = text "THUNK" <> parens (pretty exp) $$ nest 3 (prettyCallStack callStack)
+  pretty BlackHole = text "BLACKHOLE"
+  pretty Error = text "ERROR"
 
 -- | Test for "value" objects.
 isValue :: Object -> Bool
@@ -189,14 +189,14 @@ isPap other = False
 
 -- | A top-level declaration (f = obj).
 data Decl = Decl Var Object
-   deriving Show
+  deriving Show
 
 instance Pretty Decl where
-   pretty (Decl var obj) = text var <+> equals <+> pretty obj
+  pretty (Decl var obj) = text var <+> equals <+> pretty obj
 
 -- | A whole program.
 newtype Program = Program [Decl]
-   deriving Show
+  deriving Show
 
 instance Semigroup Program where
   (Program decl1) <> (Program decl2) = Program (decl1 Semigroup.<> decl2)
@@ -209,24 +209,24 @@ instance Pretty Program where
 
 -- | Primitive operators.
 data Prim
-   = Add                        -- ^ Unboxed integer addition (x + y).
-   | Subtract                   -- ^ Unboxed integer subtraction (x - y).
-   | Multiply                   -- ^ Unboxed integer multiplication (x * y).
-   | Equality                   -- ^ Unboxed integer equality test (x == y).
-   | LessThan                   -- ^ Unboxed integer less-than comparison (x < y).
-   | GreaterThan                -- ^ Unboxed integer greater-than comparison ( x > y).
-   | LessThanEquals             -- ^ Unboxed integer less-than-equals comparison ( x <= y).
-   | GreaterThanEquals          -- ^ Unboxed integer greater-than-equals comparison ( x >= y).
-   | IntToBool                  -- ^ Convert an unboxed integer to a (boxed) boolean ( 1 = True, 0 = False).
-   deriving (Eq, Show)
+  = Add                        -- ^ Unboxed integer addition (x + y).
+  | Subtract                   -- ^ Unboxed integer subtraction (x - y).
+  | Multiply                   -- ^ Unboxed integer multiplication (x * y).
+  | Equality                   -- ^ Unboxed integer equality test (x == y).
+  | LessThan                   -- ^ Unboxed integer less-than comparison (x < y).
+  | GreaterThan                -- ^ Unboxed integer greater-than comparison ( x > y).
+  | LessThanEquals             -- ^ Unboxed integer less-than-equals comparison ( x <= y).
+  | GreaterThanEquals          -- ^ Unboxed integer greater-than-equals comparison ( x >= y).
+  | IntToBool                  -- ^ Convert an unboxed integer to a (boxed) boolean ( 1 = True, 0 = False).
+  deriving (Eq, Show)
 
 instance Pretty Prim where
-   pretty Add = text "plus#"
-   pretty Subtract = text "sub#"
-   pretty Multiply = text "mult#"
-   pretty Equality = text "eq#"
-   pretty LessThan = text "lt#"
-   pretty GreaterThan = text "gt#"
-   pretty LessThanEquals = text "lte#"
-   pretty GreaterThanEquals = text "gte#"
-   pretty IntToBool = text "intToBool#"
+  pretty Add = text "plus#"
+  pretty Subtract = text "sub#"
+  pretty Multiply = text "mult#"
+  pretty Equality = text "eq#"
+  pretty LessThan = text "lt#"
+  pretty GreaterThan = text "gt#"
+  pretty LessThanEquals = text "lte#"
+  pretty GreaterThanEquals = text "gte#"
+  pretty IntToBool = text "intToBool#"

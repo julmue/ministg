@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Ministg.Lexer
--- Copyright   : (c) 2009-2012 Bernie Pope 
+-- Copyright   : (c) 2009-2012 Bernie Pope
 -- License     : BSD-style
 -- Maintainer  : florbitous@gmail.com
 -- Stability   : experimental
@@ -10,7 +10,7 @@
 -- Lexical analysis for ministg programs.
 -----------------------------------------------------------------------------
 
-module Ministg.Lexer 
+module Ministg.Lexer
    ( Token (..)
    , Symbol (..)
    , Ident
@@ -18,7 +18,7 @@ module Ministg.Lexer
    )
 where
 
-import Data.Char 
+import Data.Char
    ( isDigit
    , isAlpha
    , isPrint
@@ -36,15 +36,15 @@ instance Show Token where
 type Ident = String
 
 data Symbol
-   = Variable Ident 
+   = Variable Ident
    | Constructor Ident
    | Natural Integer
    | QuotedString String
    | Equals
-   | BackSlash 
+   | BackSlash
    | RightArrow
    | Let
-   | In 
+   | In
    | Case
    | Of
    | LeftParen
@@ -55,7 +55,7 @@ data Symbol
    | Fun
    | Con
    | Pap
-   | Thunk 
+   | Thunk
    | Plus
    | Minus
    | Times
@@ -69,8 +69,8 @@ data Symbol
    | Error
    deriving (Eq, Show)
 
-lexer :: String -> String -> Either ParseError [Token] 
-lexer = parse tokenise 
+lexer :: String -> String -> Either ParseError [Token]
+lexer = parse tokenise
 
 tokenise :: Parser [Token]
 tokenise = skip *> sepEndBy token skip <* eof
@@ -81,7 +81,7 @@ skip = skipMany (comment <|> whiteSpace)
 whiteSpace :: Parser ()
 whiteSpace = space >> return ()
 
-comment :: Parser () 
+comment :: Parser ()
 comment = singleLineComment
 
 singleLineComment :: Parser ()
@@ -94,12 +94,12 @@ eol = newline >> return ()
 -- syntactic role. Sometimes tokens from different syntactic classes can have
 -- the same prefix.
 token :: Parser Token
-token = 
+token =
    punctuation <|>
-   keyword     <|> 
-   variable    <|> 
+   keyword     <|>
+   variable    <|>
    constructor <|>
-   parenthesis <|> 
+   parenthesis <|>
    number <|>
    quotedString
 
@@ -116,13 +116,13 @@ quotedString = tokenPos parseString QuotedString
    parseString = char '"' *> manyTill anyChar (char '"')
 
 variable :: Parser Token
-variable = tokenPos (parseIdent lower) Variable 
+variable = tokenPos (parseIdent lower) Variable
 
 constructor :: Parser Token
 constructor = tokenPos (parseIdent upper) Constructor
 
 parseIdent :: Parser Char -> Parser String
-parseIdent firstChar = (:) <$> firstChar <*> many (char '_' <|> alphaNum) 
+parseIdent firstChar = (:) <$> firstChar <*> many (char '_' <|> alphaNum)
 
 keyword :: Parser Token
 keyword =
@@ -152,22 +152,22 @@ keyword =
       kwParser = string str >> notFollowedBy alphaNum
 
 parenthesis :: Parser Token
-parenthesis = 
-   simpleTok "(" LeftParen  <|> 
+parenthesis =
+   simpleTok "(" LeftParen  <|>
    simpleTok ")" RightParen <|>
    simpleTok "{" LeftBrace  <|>
-   simpleTok "}" RightBrace  
+   simpleTok "}" RightBrace
 
 punctuation :: Parser Token
-punctuation = 
-   simpleTok "=" Equals 
-   <|> simpleTok ";" SemiColon 
-   <|> simpleTok "\\" BackSlash 
+punctuation =
+   simpleTok "=" Equals
+   <|> simpleTok ";" SemiColon
+   <|> simpleTok "\\" BackSlash
    <|> simpleTok "->" RightArrow
 
 simpleTok :: String -> Symbol -> Parser Token
-simpleTok str token = tokenPos (string str) (const token) 
+simpleTok str token = tokenPos (string str) (const token)
 
 tokenPos :: Parser a -> (a -> Symbol) -> Parser Token
-tokenPos parser mkToken = 
+tokenPos parser mkToken =
   Token <$> ((,) <$> getPosition <*> (mkToken <$> parser))

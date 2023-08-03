@@ -2,7 +2,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Ministg.CallStack
--- Copyright   : (c) 2009-2012 Bernie Pope 
+-- Copyright   : (c) 2009-2012 Bernie Pope
 -- License     : BSD-style
 -- Maintainer  : florbitous@gmail.com
 -- Stability   : experimental
@@ -11,7 +11,12 @@
 -- Stack of program annotations. Simulate a call stack.
 -----------------------------------------------------------------------------
 
-module Ministg.CallStack (CallStack, push, showCallStack, prettyCallStack) where
+module Ministg.CallStack (
+  CallStack,
+  push,
+  showCallStack,
+  prettyCallStack,
+  ) where
 
 import Ministg.Pretty
 #if MIN_VERSION_base(4,11,0)

@@ -1,34 +1,34 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      : Ministg.Annotate
--- Copyright   : (c) 2009-2012 Bernie Pope 
+-- Copyright   : (c) 2009-2012 Bernie Pope
 -- License     : BSD-style
 -- Maintainer  : florbitous@gmail.com
 -- Stability   : experimental
 -- Portability : ghc
 --
--- Add stack annotations to top-level functions in ministg programs. 
+-- Add stack annotations to top-level functions in ministg programs.
 -----------------------------------------------------------------------------
 module Ministg.Annotate where
 
 import Ministg.AST
 
 class Annotate t where
-   annotate :: t -> t
+  annotate :: t -> t
 
 instance Annotate a => Annotate [a] where
-   annotate = map annotate
+  annotate = map annotate
 
 instance Annotate Program where
-   annotate (Program decls) = Program $ annotate decls
+  annotate (Program decls) = Program $ annotate decls
 
 instance Annotate Decl where
-   -- don't annotate functions which are already annotated (by the user)
-   annotate decl@(Decl _ (Fun _ (Stack {}))) = decl
-   annotate (Decl var (Fun args body))
-      = Decl var (Fun args (Stack var body))
-   -- don't annotate thunks which are already annotated (by the user)
-   annotate decl@(Decl _ (Thunk (Stack {}) _)) = decl
-   annotate decl@(Decl var (Thunk body callStack)) 
-      = Decl var (Thunk (Stack var body) callStack) 
-   annotate other = other
+  -- don't annotate functions which are already annotated (by the user)
+  annotate decl@(Decl _ (Fun _ (Stack {}))) = decl
+  annotate (Decl var (Fun args body))
+    = Decl var (Fun args (Stack var body))
+  -- don't annotate thunks which are already annotated (by the user)
+  annotate decl@(Decl _ (Thunk (Stack {}) _)) = decl
+  annotate decl@(Decl var (Thunk body callStack))
+    = Decl var (Thunk (Stack var body) callStack)
+  annotate other = other
