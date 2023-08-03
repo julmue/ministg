@@ -1,4 +1,7 @@
 -----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+
 -- |
 -- Module      : Ministg.Annotate
 -- Copyright   : (c) 2009-2012 Bernie Pope
@@ -8,7 +11,6 @@
 -- Portability : ghc
 --
 -- Add stack annotations to top-level functions in ministg programs.
------------------------------------------------------------------------------
 module Ministg.Annotate where
 
 import Ministg.AST
@@ -25,10 +27,10 @@ instance Annotate Program where
 instance Annotate Decl where
   -- don't annotate functions which are already annotated (by the user)
   annotate decl@(Decl _ (Fun _ (Stack {}))) = decl
-  annotate (Decl var (Fun args body))
-    = Decl var (Fun args (Stack var body))
+  annotate (Decl var (Fun args body)) =
+    Decl var (Fun args (Stack var body))
   -- don't annotate thunks which are already annotated (by the user)
   annotate decl@(Decl _ (Thunk (Stack {}) _)) = decl
-  annotate decl@(Decl var (Thunk body callStack))
-    = Decl var (Thunk (Stack var body) callStack)
+  annotate decl@(Decl var (Thunk body callStack)) =
+    Decl var (Thunk (Stack var body) callStack)
   annotate other = other

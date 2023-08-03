@@ -1,4 +1,7 @@
 -----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+
 -- |
 -- Module      : Ministg.Lexer
 -- Copyright   : (c) 2009-2012 Bernie Pope
@@ -8,66 +11,63 @@
 -- Portability : ghc
 --
 -- Lexical analysis for ministg programs.
------------------------------------------------------------------------------
-
 module Ministg.Lexer
-   ( Token (..)
-   , Symbol (..)
-   , Ident
-   , lexer
-   )
+  ( Token (..),
+    Symbol (..),
+    Ident,
+    lexer,
+  )
 where
 
+import Control.Applicative hiding (many, (<|>))
 import Data.Char
-   ( isDigit
-   , isAlpha
-   , isPrint
-   , isLower
-   )
-
+  ( isAlpha,
+    isDigit,
+    isLower,
+    isPrint,
+  )
 import Text.ParserCombinators.Parsec hiding (token)
-import Control.Applicative hiding ((<|>), many)
 
 newtype Token = Token (SourcePos, Symbol)
 
 instance Show Token where
-   show (Token (pos, symbol)) = show symbol
+  show (Token (pos, symbol)) = show symbol
 
 type Ident = String
 
 data Symbol
-   = Variable Ident
-   | Constructor Ident
-   | Natural Integer
-   | QuotedString String
-   | Equals
-   | BackSlash
-   | RightArrow
-   | Let
-   | In
-   | Case
-   | Of
-   | LeftParen
-   | RightParen
-   | LeftBrace
-   | RightBrace
-   | SemiColon
-   | Fun
-   | Con
-   | Pap
-   | Thunk
-   | Plus
-   | Minus
-   | Times
-   | Equality
-   | GreaterThan
-   | LessThan
-   | GreaterThanEquals
-   | LessThanEquals
-   | IntToBool
-   | Stack
-   | Error
-   deriving (Eq, Show)
+  = Variable Ident
+  | Constructor Ident
+  | Natural Integer
+  | QuotedString String
+  | Equals
+  | BackSlash
+  | RightArrow
+  | Let
+  | In
+  | Case
+  | Of
+  | LeftParen
+  | RightParen
+  | LeftBrace
+  | RightBrace
+  | SemiColon
+  | Fun
+  | Con
+  | Pap
+  | Thunk
+  | Plus
+  | Minus
+  | Times
+  | Equality
+  | GreaterThan
+  | LessThan
+  | GreaterThanEquals
+  | LessThanEquals
+  | IntToBool
+  | Stack
+  | Error
+  deriving (Eq, Show)
 
 lexer :: String -> String -> Either ParseError [Token]
 lexer = parse tokenise
@@ -85,7 +85,7 @@ comment :: Parser ()
 comment = singleLineComment
 
 singleLineComment :: Parser ()
-singleLineComment = string  "#" >> manyTill anyChar eol >> return ()
+singleLineComment = string "#" >> manyTill anyChar eol >> return ()
 
 eol :: Parser ()
 eol = newline >> return ()
@@ -95,25 +95,25 @@ eol = newline >> return ()
 -- the same prefix.
 token :: Parser Token
 token =
-   punctuation <|>
-   keyword     <|>
-   variable    <|>
-   constructor <|>
-   parenthesis <|>
-   number <|>
-   quotedString
+  punctuation
+    <|> keyword
+    <|> variable
+    <|> constructor
+    <|> parenthesis
+    <|> number
+    <|> quotedString
 
 number :: Parser Token
 number = tokenPos parseNum Natural
-   where
-   parseNum :: Parser Integer
-   parseNum = read <$> many1 digit
+  where
+    parseNum :: Parser Integer
+    parseNum = read <$> many1 digit
 
 quotedString :: Parser Token
 quotedString = tokenPos parseString QuotedString
-   where
-   parseString :: Parser String
-   parseString = char '"' *> manyTill anyChar (char '"')
+  where
+    parseString :: Parser String
+    parseString = char '"' *> manyTill anyChar (char '"')
 
 variable :: Parser Token
 variable = tokenPos (parseIdent lower) Variable
@@ -126,44 +126,44 @@ parseIdent firstChar = (:) <$> firstChar <*> many (char '_' <|> alphaNum)
 
 keyword :: Parser Token
 keyword =
-   key "let"   Let   <|>
-   key "in"    In    <|>
-   key "case"  Case  <|>
-   key "of"    Of    <|>
-   key "FUN"   Fun   <|>
-   key "CON"   Con   <|>
-   key "PAP"   Pap   <|>
-   key "THUNK" Thunk <|>
-   key "plus#" Plus  <|>
-   key "sub#"  Minus <|>
-   key "mult#" Times <|>
-   key "eq#"   Equality <|>
-   key "lt#"   LessThan <|>
-   key "lte#"  LessThanEquals <|>
-   key "gt#"   GreaterThan <|>
-   key "gte#"  GreaterThanEquals <|>
-   key "intToBool#" IntToBool <|>
-   key "ERROR" Error <|>
-   key "stack" Stack
-   where
-   key :: String -> Symbol -> Parser Token
-   key str keyWord = tokenPos (try kwParser) (const keyWord)
+  key "let" Let
+    <|> key "in" In
+    <|> key "case" Case
+    <|> key "of" Of
+    <|> key "FUN" Fun
+    <|> key "CON" Con
+    <|> key "PAP" Pap
+    <|> key "THUNK" Thunk
+    <|> key "plus#" Plus
+    <|> key "sub#" Minus
+    <|> key "mult#" Times
+    <|> key "eq#" Equality
+    <|> key "lt#" LessThan
+    <|> key "lte#" LessThanEquals
+    <|> key "gt#" GreaterThan
+    <|> key "gte#" GreaterThanEquals
+    <|> key "intToBool#" IntToBool
+    <|> key "ERROR" Error
+    <|> key "stack" Stack
+  where
+    key :: String -> Symbol -> Parser Token
+    key str keyWord = tokenPos (try kwParser) (const keyWord)
       where
-      kwParser = string str >> notFollowedBy alphaNum
+        kwParser = string str >> notFollowedBy alphaNum
 
 parenthesis :: Parser Token
 parenthesis =
-   simpleTok "(" LeftParen  <|>
-   simpleTok ")" RightParen <|>
-   simpleTok "{" LeftBrace  <|>
-   simpleTok "}" RightBrace
+  simpleTok "(" LeftParen
+    <|> simpleTok ")" RightParen
+    <|> simpleTok "{" LeftBrace
+    <|> simpleTok "}" RightBrace
 
 punctuation :: Parser Token
 punctuation =
-   simpleTok "=" Equals
-   <|> simpleTok ";" SemiColon
-   <|> simpleTok "\\" BackSlash
-   <|> simpleTok "->" RightArrow
+  simpleTok "=" Equals
+    <|> simpleTok ";" SemiColon
+    <|> simpleTok "\\" BackSlash
+    <|> simpleTok "->" RightArrow
 
 simpleTok :: String -> Symbol -> Parser Token
 simpleTok str token = tokenPos (string str) (const token)

@@ -1,5 +1,9 @@
 {-# OPTIONS_GHC -XTypeSynonymInstances #-}
+
 -----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+
 -- |
 -- Module      : Ministg.Arity
 -- Copyright   : (c) 2009-2012 Bernie Pope
@@ -11,23 +15,23 @@
 -- Arity analysis of ministg programs: compute how many arguments each
 -- top-level and let-bound function has, and annotate the application sites
 -- of those functions.
------------------------------------------------------------------------------
+module Ministg.Arity
+  ( runArity,
+    Arity,
+  )
+where
 
-module Ministg.Arity (
-  runArity,
-  Arity,
-  ) where
-
-import qualified Data.Map as Map
-import Data.Map (Map)
-import Control.Monad.Reader
 import Control.Applicative
-import Ministg.AST
+import Control.Monad.Reader
 import Data.List (foldl')
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Ministg.AST
 
 -- | A mapping from variable names (names of functions) to their respective
 -- arities.
 type ArityMap = Map Var Int
+
 -- | A monad for pushing arity information down the AST, taking care of
 -- variable scope.
 type A a = Reader ArityMap a
@@ -38,7 +42,7 @@ runArity x = runReader (arity x) Map.empty
 
 -- | Overloaded arity function.
 class Arity a where
-   arity :: a -> A a
+  arity :: a -> A a
 
 instance Arity Alt where
   arity (PatAlt con args body) =
@@ -55,7 +59,7 @@ instance Arity Program where
   arity (Program decls) = Program <$> (local (Map.union as) $ mapM arity decls)
     where
       as :: ArityMap
-      as = Map.fromList [ (var, countArgs obj) | Decl var obj <- decls, isFun obj]
+      as = Map.fromList [(var, countArgs obj) | Decl var obj <- decls, isFun obj]
 
 -- | Count the number of arguments (really parameters) of a function object).
 countArgs :: Object -> Int
